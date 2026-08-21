@@ -1,91 +1,36 @@
 # Database Design — Sahaayak
 
-This document outlines the document and collection layout in **Cloud Firestore** for the Sahaayak application.
+This document outlines the database technology choices and setup requirements for **Sahaayak**.
 
 ---
 
-## 1. Firestore Collection Map
+## 1. Cloud Firestore
 
-Sahaayak models user parameters, workflows, and answer profiles using nested documents and subcollections in Cloud Firestore:
-
-```text
-/services/
-  └── {serviceId} (e.g. accessible-parking-permit)
-        ├── name (String)
-        ├── description (String)
-        ├── /questions/
-        │     └── {questionKey} (order, label, type, description)
-        └── /documents/
-              └── {documentKey} (label, description, type)
-
-/users/
-  └── {uid} (email, createdAt, preferences, progress)
-        ├── /answers/
-        │     └── {questionKey} (rawValue, interpretedValue, isConfirmed, updatedAt)
-        └── /documents/
-              └── {documentKey} (status, updatedAt)
-```
+Sahaayak uses **Google Cloud Firestore** as its document-oriented database. Firestore is chosen for:
+- Low-latency synchronization with frontend components.
+- Seamless compatibility with Firebase Authentication sessions.
+- Clean JSON-like document model configurations.
 
 ---
 
-## 2. Collection Layouts
+## 2. Setup Requirements
 
-### 1. services
-Tracks metadata for workflows.
-- `/services/accessible-parking-permit`
-  - `name`: "Accessible Parking Permit"
-  - `description`: Overview description text.
-
-### 2. questions (subcollection under services)
-Stores workflow sequential inputs.
-- `/services/{serviceId}/questions/{questionKey}` (e.g., `/questions/dob`)
-  - `key` (String): Unique key.
-  - `label` (String): E.g., "What is your date of birth?"
-  - `type` (String): text, date, boolean, number.
-  - `description` (String): Explanatory help string.
-  - `order` (Integer): Incremental order sequence.
-
-### 3. documents (subcollection under services)
-Stores checklist attachments metadata.
-- `/services/{serviceId}/documents/{documentKey}` (e.g., `/documents/identity_proof`)
-  - `key` (String)
-  - `label` (String)
-  - `description` (String)
-  - `type` (String): REQUIRED, OPTIONAL
-
-### 4. users
-Stores user details, preferences, and step status.
-- `/users/{uid}`
-  - `id`: Firebase Auth User UID.
-  - `email`: Profile email.
-  - `createdAt`: ISO Timestamp.
-  - `preferences`:
-    - `textSize`: normal, large, xlarge.
-    - `contrast`: normal, high.
-    - `voiceSpeed`: slow, normal, fast.
-    - `voiceEnabled`: boolean.
-  - `progress`:
-    - `currentStep`: Integer index.
-    - `status`: NOT_STARTED, IN_PROGRESS, COMPLETED.
-    - `updatedAt`: ISO Timestamp.
-
-### 5. answers (subcollection under users)
-Stores confirmed answers.
-- `/users/{uid}/answers/{questionKey}`
-  - `rawValue` (String): Raw transcription or typed text.
-  - `interpretedValue` (String): Structured processed parameter.
-  - `isConfirmed` (Boolean): Locked true.
-  - `updatedAt`: ISO Timestamp.
-
-### 6. documents (subcollection under users)
-Tracks file status details.
-- `/users/{uid}/documents/{documentKey}`
-  - `status` (String): MISSING, COMPLETED.
-  - `updatedAt`: ISO Timestamp.
+To configure the Firestore instance:
+1. Navigate to the Google Firebase Console.
+2. Select your project and click **Create Database** under the Cloud Firestore tab.
+3. Configure the database in production or test mode.
+4. Establish local configuration variables in `.env` mapping to the Firestore API credentials.
 
 ---
 
-## 3. Database Migration Notes
+## 3. Database Rules (`firestore.rules`)
 
-Sahaayak was migrated from PostgreSQL and Prisma. Prisma migration scripts, clients, schemas, and `DATABASE_URL` environment variables are deprecated and completely removed.
-Cloud Firestore is now the single database.
+Access security is managed directly on the database level using `firestore.rules`.
+- A base ruleset has been created at the root of the project to restrict public reading and writing to authenticated users, protecting user namespaces.
+- Rules are deployed to Firebase using the Firebase CLI commands.
+
+---
+
+## 4. Database Migration Notes
+
+Sahaayak was migrated from PostgreSQL and Prisma. Prisma migration scripts, clients, schemas, and `DATABASE_URL` environment variables are deprecated and completely removed. Cloud Firestore is now the database.
