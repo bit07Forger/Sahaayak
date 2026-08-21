@@ -14,6 +14,9 @@ service cloud.firestore {
     function isValidUserResource(uid) {
       let data = request.resource.data;
       return data.uid == uid 
+        && data.email is string
+        && data.createdAt is string
+        && data.updatedAt is string
         && data.keys().hasOnly(['uid', 'email', 'preferences', 'createdAt', 'updatedAt'])
         && data.preferences.keys().hasOnly(['textSize', 'contrast', 'voiceSpeed', 'voiceEnabled'])
         && data.preferences.textSize in ['normal', 'large', 'xlarge']
@@ -25,9 +28,12 @@ service cloud.firestore {
     function isValidProgressResource(serviceId) {
       let data = request.resource.data;
       return data.serviceId == serviceId
-        && data.keys().hasOnly(['serviceId', 'currentStep', 'status', 'answers', 'documentStatuses', 'updatedAt'])
         && data.currentStep is int
-        && data.status in ['NOT_STARTED', 'IN_PROGRESS', 'COMPLETED'];
+        && data.status in ['NOT_STARTED', 'IN_PROGRESS', 'COMPLETED']
+        && data.answers is map
+        && data.documentStatuses is map
+        && data.updatedAt is string
+        && data.keys().hasOnly(['serviceId', 'currentStep', 'status', 'answers', 'documentStatuses', 'updatedAt']);
     }
 
     // Default Deny Catch-all

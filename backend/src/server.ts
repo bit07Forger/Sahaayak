@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { authenticateToken } from './middleware/auth';
+import { authenticateToken, requireFirebaseAuth } from './middleware/auth';
 import { getMe, updatePreferences } from './controllers/authController';
 import { getServices, getCurrentWorkflow } from './controllers/workflowController';
 import { interpretAnswer, confirmAnswer, validateInput } from './controllers/answerController';
@@ -18,6 +18,15 @@ app.use(express.json());
 
 // Profile / Preferences Routes (Stateless token verified)
 app.get('/api/auth/me', authenticateToken, getMe);
+app.get('/api/auth/session', requireFirebaseAuth, (req: any, res: any) => {
+  res.json({
+    user: {
+      uid: req.user?.uid,
+      email: req.user?.email,
+      emailVerified: req.user?.emailVerified,
+    },
+  });
+});
 app.post('/api/auth/preferences', authenticateToken, updatePreferences);
 
 // Workflow & Services

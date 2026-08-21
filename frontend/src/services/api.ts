@@ -1,14 +1,28 @@
+import { auth, authPersistenceReady } from './firebase';
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-function getAuthHeader(): Record<string, string> {
-  const token = localStorage.getItem('sahaayak_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
+async function getAuthHeader(): Promise<Record<string, string>> {
+  if (authPersistenceReady) {
+    await authPersistenceReady;
+  }
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    return {};
+  }
+  try {
+    const token = await currentUser.getIdToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  } catch (error) {
+    return {};
+  }
 }
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  const authHeader = await getAuthHeader();
   const headers = {
     'Content-Type': 'application/json',
-    ...getAuthHeader(),
+    ...authHeader,
     ...(options.headers as Record<string, string> || {}),
   };
 
@@ -88,6 +102,9 @@ export interface ReadinessSummary {
 export const api = {
   // Session API
   getMe: () => request<{ user: UserProfile }>('/auth/me'),
+
+  getAuthenticatedSession: () => 
+    request<{ user: { uid: string; email?: string; emailVerified?: boolean } }>('/auth/session'),
 
   updatePreferences: (prefs: Partial<UserPreferences>) =>
     request<{ success: boolean; preferences: UserPreferences }>('/auth/preferences', {
