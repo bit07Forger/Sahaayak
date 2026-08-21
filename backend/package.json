@@ -6,7 +6,10 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "nodemon --watch src -e ts --exec ts-node src/index.ts"
+    "dev": "nodemon --watch src -e ts --exec ts-node src/index.ts",
+    "seed:services:dry-run": "node scripts/seed.mjs --dry-run",
+    "seed:services:apply": "node scripts/seed.mjs --apply",
+    "seed:services:check": "node scripts/seed.mjs --check"
   },
   "dependencies": {
     "@google/genai": "^2.3.0",

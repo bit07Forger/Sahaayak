@@ -96,11 +96,26 @@ export const ACTIVE_SERVICE: Service = {
 
 // Seeding Firestore on startup if empty
 export async function initializeFirestoreData() {
+  const seedFlag = process.env.SEED_DEMO_DATA;
+  if (seedFlag !== 'true') {
+    console.log('Auto demo seeding disabled by environment flag (SEED_DEMO_DATA is not "true").');
+    return;
+  }
+
+  const projectId = process.env.FIREBASE_PROJECT_ID || 'unknown-project';
+  const isProduction = projectId.includes('prod') || process.env.NODE_ENV === 'production';
+  const hasOverride = process.env.FORCE_PRODUCTION_SEED === 'true';
+
+  if (isProduction && !hasOverride) {
+    console.warn(`Auto demo seeding skipped: Refusing to seed on production database project "${projectId}" without explicit FORCE_PRODUCTION_SEED="true" override.`);
+    return;
+  }
+
   try {
     const serviceRef = firestore.collection('services').doc(ACTIVE_SERVICE.key);
     const doc = await serviceRef.get();
     if (!doc.exists) {
-      console.log('Seeding service definitions to Firestore...');
+      console.log(`[Auto Seed] Seeding service "${ACTIVE_SERVICE.key}" in Firestore project "${projectId}"...`);
       await serviceRef.set({
         name: ACTIVE_SERVICE.name,
         description: ACTIVE_SERVICE.description,
@@ -122,10 +137,12 @@ export async function initializeFirestoreData() {
       });
       await dBatch.commit();
 
-      console.log('Seeding completed successfully!');
+      console.log(`[Auto Seed] Seeding completed successfully. Total items created: ${1 + ACTIVE_SERVICE.questions.length + ACTIVE_SERVICE.documents.length}`);
+    } else {
+      console.log(`[Auto Seed] Service "${ACTIVE_SERVICE.key}" already exists in Firestore. Seeding skipped (Idempotent check).`);
     }
-  } catch (error) {
-    console.error('Error seeding Firestore database:', error);
+  } catch (error: any) {
+    console.error('Warning: Auto-seeding failed due to an initialization or network error:', error.message || error);
   }
 }
 

@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 
 const App: React.FC = () => {
-  const { user, login, register, logout } = useAuth();
+  const { user, loading, status, login, register, logout } = useAuth();
   const { 
     textSize, 
     contrast, 
@@ -42,7 +42,12 @@ const App: React.FC = () => {
   const [authTab, setAuthTab] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [authError, setAuthError] = useState<string | null>(null);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Workflow / Steps State
   const [workflow, setWorkflow] = useState<ServiceWorkflow | null>(null);
@@ -75,18 +80,20 @@ const App: React.FC = () => {
   // Speech Recognition Ref
   const recognitionRef = useRef<any>(null);
 
-  // 1. Fetch Workflow data on login
+  // 1. Fetch Workflow data on login & Enforce Route Protection
   useEffect(() => {
-    if (user) {
+    if (status === 'authenticated') {
       fetchWorkflowData();
       if (currentView === 'landing' || currentView === 'auth') {
         setCurrentView('explanation');
       }
-    } else {
-      setCurrentView('landing');
+    } else if (status === 'unauthenticated') {
       setWorkflow(null);
+      if (['explanation', 'workflow', 'checklist', 'summary'].includes(currentView)) {
+        setCurrentView('landing');
+      }
     }
-  }, [user]);
+  }, [status, currentView]);
 
   // 2. Announce screen load to screen readers & Read Aloud
   useEffect(() => {
@@ -156,15 +163,109 @@ const App: React.FC = () => {
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
-    try {
-      if (authTab === 'login') {
-        await login(email, password);
-      } else {
-        await register(email, password);
+    const trimmedEmail = email.trim();
+
+    if (authTab === 'register') {
+      // 1. Non-empty, valid email validation
+      if (!trimmedEmail) {
+        setAuthError('Email address is required.');
+        speak('Error: Email address is required.');
+        return;
       }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(trimmedEmail)) {
+        setAuthError('Please enter a valid email address.');
+        speak('Error: Please enter a valid email address.');
+        return;
+      }
+
+      // 2. Minimum 8 characters password validation
+      if (password.length < 8) {
+        setAuthError('Password must be at least 8 characters long.');
+        speak('Error: Password must be at least 8 characters long.');
+        return;
+      }
+
+      // 3. Exact matching confirmation password validation
+      if (password !== confirmPassword) {
+        setAuthError('Passwords do not match.');
+        speak('Error: Passwords do not match.');
+        return;
+      }
+
+      setIsRegistering(true);
+      try {
+        await register(trimmedEmail, password);
+        setRegistrationSuccess(true);
+        speak('Registration successful!');
+      } catch (err: any) {
+        // Map Firebase error codes into clean, non-technical messages
+        let msg = 'Registration failed. Please check your credentials and try again.';
+        if (err.code === 'auth/invalid-email') {
+          msg = 'Invalid email address.';
+        } else if (err.code === 'auth/email-already-in-use') {
+          msg = 'This email address is already in use by another account.';
+        } else if (err.code === 'auth/weak-password') {
+          msg = 'The password is too weak. It must be at least 8 characters.';
+        } else if (err.code === 'auth/network-request-failed') {
+          msg = 'A network error occurred. Please check your internet connection.';
+        } else if (err.message) {
+          msg = err.message;
+        }
+        setAuthError(msg);
+        speak(`Error: ${msg}`);
+      } finally {
+        setIsRegistering(false);
+      }
+    } else {
+      // 1. Validate trimmed email
+      if (!trimmedEmail) {
+        setAuthError('Email address is required.');
+        speak('Error: Email address is required.');
+        return;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(trimmedEmail)) {
+        setAuthError('Please enter a valid email address.');
+        speak('Error: Please enter a valid email address.');
+        return;
+      }
+
+      // 2. Validate non-empty password
+      if (!password) {
+        setAuthError('Password is required.');
+        speak('Error: Password is required.');
+        return;
+      }
+
+      setIsLoggingIn(true);
+      try {
+        await login(trimmedEmail, password);
+      } catch (err: any) {
+        // Map credentials and wrong password exceptions to a single neutral security warning
+        let msg = 'We could not sign you in with that email and password. Please check them and try again.';
+        if (err.code === 'auth/network-request-failed') {
+          msg = 'A network error occurred. Please check your internet connection and try again.';
+        }
+        setAuthError(msg);
+        speak(`Error: ${msg}`);
+      } finally {
+        setIsLoggingIn(false);
+      }
+    }
+  };
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      setCurrentView('landing');
     } catch (err: any) {
-      setAuthError(err.message || 'Authentication failed.');
-      speak(`Error: ${err.message || 'Authentication failed.'}`);
+      const msg = 'Logout failed. Please check your connection and try again.';
+      speak(`Error: ${msg}`);
+      alert(msg);
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -318,6 +419,21 @@ const App: React.FC = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center transition-colors duration-200 ${
+        contrast === 'high' ? 'bg-black text-white' : 'bg-slate-950 text-white'
+      }`} role="status" aria-live="polite">
+        <div className="text-center">
+          <div className={`animate-spin w-12 h-12 border-4 rounded-full border-t-transparent mx-auto mb-4 ${
+            contrast === 'high' ? 'border-hc-accent' : 'border-blue-500'
+          }`}></div>
+          <p className="font-bold text-lg">Loading your session...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`min-h-screen flex flex-col transition-colors duration-200`}>
       {/* Screen Reader ARIA Live Region */}
@@ -365,11 +481,11 @@ const App: React.FC = () => {
 
             {user && (
               <button
-                onClick={() => {
-                  logout();
-                  setCurrentView('landing');
-                }}
+                onClick={handleLogout}
+                disabled={isLoggingOut}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all focus-visible:ring-4 ${
+                  isLoggingOut ? 'opacity-50 cursor-not-allowed' : ''
+                } ${
                   contrast === 'high' 
                     ? 'bg-black text-white border-2 border-hc-border hover:bg-white hover:text-black' 
                     : 'bg-red-950/40 text-red-200 border border-red-900/40 hover:bg-red-900/40'
@@ -377,7 +493,9 @@ const App: React.FC = () => {
                 aria-label="Log Out"
               >
                 <LogOut size={16} />
-                <span className="hidden sm:inline">Logout</span>
+                <span className="hidden sm:inline">
+                  {isLoggingOut ? 'Logging out...' : 'Logout'}
+                </span>
               </button>
             )}
           </div>
@@ -587,59 +705,119 @@ const App: React.FC = () => {
                 <div 
                   className="p-3 mb-4 rounded-lg bg-red-950/60 border border-red-900/60 text-red-200 text-sm flex items-center gap-2"
                   role="alert"
+                  id="auth-error-desc"
                 >
                   <AlertTriangle size={18} className="shrink-0 text-red-400" />
                   <span>{authError}</span>
                 </div>
               )}
 
-              <form onSubmit={handleAuthSubmit} className="space-y-5">
-                <div>
-                  <label htmlFor="email" className="block text-sm font-bold mb-2">Email Address</label>
-                  <input
-                    type="email"
-                    id="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@example.com"
-                    className={`w-full px-4 py-3 rounded-xl transition-all outline-none ${
-                      contrast === 'high' 
-                        ? 'bg-black border-2 border-hc-border focus-visible:border-hc-accent text-white' 
-                        : 'bg-slate-800/80 border border-slate-700/60 focus:border-blue-500 text-white'
+              {registrationSuccess ? (
+                <div className="text-center py-6">
+                  <div className="flex justify-center mb-4">
+                    <CheckCircle2 size={48} className={contrast === 'high' ? 'text-hc-accent' : 'text-green-500'} />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Registration Successful</h3>
+                  <p className="text-sm opacity-90 mb-6">Your account has been created successfully.</p>
+                  <button
+                    onClick={() => {
+                      setRegistrationSuccess(false);
+                      setAuthTab('login');
+                      setEmail('');
+                      setPassword('');
+                      setConfirmPassword('');
+                      setAuthError(null);
+                    }}
+                    className={`w-full py-3 rounded-xl font-bold hover-scale text-base focus-visible:ring-4 ${
+                      contrast === 'high' ? 'bg-hc-accent text-black' : 'bg-blue-600 text-white shadow-lg'
                     }`}
-                  />
+                  >
+                    Go to Login
+                  </button>
                 </div>
+              ) : (
+                <form onSubmit={handleAuthSubmit} className="space-y-5">
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-bold mb-2">Email Address</label>
+                    <input
+                      type="email"
+                      id="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="name@example.com"
+                      aria-invalid={authError ? 'true' : 'false'}
+                      aria-describedby={authError ? 'auth-error-desc' : undefined}
+                      className={`w-full px-4 py-3 rounded-xl transition-all outline-none ${
+                        contrast === 'high' 
+                          ? 'bg-black border-2 border-hc-border focus-visible:border-hc-accent text-white' 
+                          : 'bg-slate-800/80 border border-slate-700/60 focus:border-blue-500 text-white'
+                      }`}
+                    />
+                  </div>
 
-                <div>
-                  <label htmlFor="pass" className="block text-sm font-bold mb-2">Password (Min. 6 chars)</label>
-                  <input
-                    type="password"
-                    id="pass"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className={`w-full px-4 py-3 rounded-xl transition-all outline-none ${
+                  <div>
+                    <label htmlFor="pass" className="block text-sm font-bold mb-2">
+                      {authTab === 'register' ? 'Password (Min. 8 chars)' : 'Password'}
+                    </label>
+                    <input
+                      type="password"
+                      id="pass"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      aria-invalid={authError ? 'true' : 'false'}
+                      className={`w-full px-4 py-3 rounded-xl transition-all outline-none ${
+                        contrast === 'high' 
+                          ? 'bg-black border-2 border-hc-border focus-visible:border-hc-accent text-white' 
+                          : 'bg-slate-800/80 border border-slate-700/60 focus:border-blue-500 text-white'
+                      }`}
+                    />
+                  </div>
+
+                  {authTab === 'register' && (
+                    <div>
+                      <label htmlFor="confirm-pass" className="block text-sm font-bold mb-2">Confirm Password</label>
+                      <input
+                        type="password"
+                        id="confirm-pass"
+                        required
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="••••••••"
+                        aria-invalid={authError ? 'true' : 'false'}
+                        className={`w-full px-4 py-3 rounded-xl transition-all outline-none ${
+                          contrast === 'high' 
+                            ? 'bg-black border-2 border-hc-border focus-visible:border-hc-accent text-white' 
+                            : 'bg-slate-800/80 border border-slate-700/60 focus:border-blue-500 text-white'
+                        }`}
+                      />
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isRegistering || isLoggingIn}
+                    className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover-scale text-base focus-visible:ring-4 ${
+                      (isRegistering || isLoggingIn) ? 'opacity-50 cursor-not-allowed' : ''
+                    } ${
                       contrast === 'high' 
-                        ? 'bg-black border-2 border-hc-border focus-visible:border-hc-accent text-white' 
-                        : 'bg-slate-800/80 border border-slate-700/60 focus:border-blue-500 text-white'
+                        ? 'bg-hc-accent text-black' 
+                        : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-900/20'
                     }`}
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover-scale text-base ${
-                    contrast === 'high' 
-                      ? 'bg-hc-accent text-black' 
-                      : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-900/20'
-                  }`}
-                >
-                  {authTab === 'login' ? 'Confirm Login' : 'Create Account'}
-                  <ArrowRight size={18} />
-                </button>
-              </form>
+                  >
+                    {isRegistering 
+                      ? 'Creating Account...' 
+                      : isLoggingIn
+                        ? 'Signing In...'
+                        : authTab === 'login' 
+                          ? 'Confirm Login' 
+                          : 'Create Account'}
+                    <ArrowRight size={18} />
+                  </button>
+                </form>
+              )}
 
               <button
                 onClick={() => setCurrentView('landing')}
