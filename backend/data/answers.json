@@ -1,0 +1,10 @@
+[
+  {
+    "userId": "usr_0tca7lmr1",
+    "questionKey": "name",
+    "rawValue": "my name is Bob Smith",
+    "interpretedValue": "Bob Smith",
+    "isConfirmed": true,
+    "updatedAt": "2026-08-21T17:51:00.265Z"
+  }
+]

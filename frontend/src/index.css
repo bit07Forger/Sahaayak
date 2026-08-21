@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Accessibility Size Scaling System */
+html.text-scale-normal {
+  font-size: 16px;
+}
+
+html.text-scale-large {
+  font-size: 20px;
+}
+
+html.text-scale-xlarge {
+  font-size: 24px;
+}
+
+/* Premium Styling Base */
+body {
+  transition: background-color 0.2s ease, color 0.2s ease, font-size 0.2s ease;
+}
+
+/* Normal Mode Premium Slate Theme */
+body.theme-normal {
+  background-color: #0f172a; /* Slate 900 */
+  color: #f8fafc; /* Slate 50 */
+  font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Accessible High Contrast System (Black, White, Neon Yellow) */
+body.theme-high-contrast {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* Contrast Overrides for Components */
+.theme-high-contrast button, 
+.theme-high-contrast a, 
+.theme-high-contrast input, 
+.theme-high-contrast select, 
+.theme-high-contrast textarea {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border: 3px solid #facc15 !important; /* Thick Yellow Border */
+  outline-color: #facc15 !important;
+  font-weight: 700 !important;
+}
+
+.theme-high-contrast button:hover, 
+.theme-high-contrast a:hover {
+  background-color: #facc15 !important;
+  color: #000000 !important;
+  cursor: pointer;
+}
+
+/* Focus indicator visibility */
+:focus-visible {
+  outline: 4px solid #3b82f6 !important;
+  outline-offset: 2px;
+}
+
+.theme-high-contrast :focus-visible {
+  outline: 4px solid #facc15 !important;
+  outline-offset: 2px;
+}
+
+/* Micro-animations */
+.hover-scale {
+  transition: transform 0.15s ease;
+}
+.hover-scale:hover {
+  transform: scale(1.02);
+}
+
+/* Interactive elements scaling */
+button, input, select {
+  min-height: 48px; /* Mobile accessibility minimum target size */
+}
