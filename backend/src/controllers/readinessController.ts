@@ -12,17 +12,26 @@ export async function getReadiness(req: AuthRequest, res: Response) {
     const dbQuestions = ACTIVE_SERVICE.questions;
     const dbDocuments = ACTIVE_SERVICE.documents;
 
-    // Fetch user answers from Firestore subcollection
-    const userAnswers = await db.findAnswersByUserId(userId);
-    const confirmedAnswerKeys = new Set(
-      userAnswers.filter((a) => a.isConfirmed).map((a) => a.questionKey)
-    );
+    // Fetch user progress document from Firestore
+    const progressDoc = await db.getOrCreateProgressDoc(userId, ACTIVE_SERVICE.key);
 
-    // Fetch user documents status from Firestore subcollection
-    const userDocs = await db.findDocumentStatusesByUserId(userId);
-    const completedDocKeys = new Set(
-      userDocs.filter((d) => d.status === 'COMPLETED').map((d) => d.documentKey)
-    );
+    const confirmedAnswerKeys = new Set<string>();
+    if (progressDoc.answers) {
+      Object.entries(progressDoc.answers).forEach(([qKey, ans]) => {
+        if (ans.isConfirmed) {
+          confirmedAnswerKeys.add(qKey);
+        }
+      });
+    }
+
+    const completedDocKeys = new Set<string>();
+    if (progressDoc.documentStatuses) {
+      Object.entries(progressDoc.documentStatuses).forEach(([docKey, docVal]) => {
+        if (docVal.status === 'COMPLETED') {
+          completedDocKeys.add(docKey);
+        }
+      });
+    }
 
     // Find missing items
     const missingQuestions = dbQuestions

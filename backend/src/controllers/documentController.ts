@@ -12,14 +12,16 @@ export async function getChecklist(req: AuthRequest, res: Response) {
 
     const dbDocuments = ACTIVE_SERVICE.documents;
 
-    // Get user's document statuses from Firestore
-    const userStatuses = await db.findDocumentStatusesByUserId(userId);
+    // Get user's document statuses from Firestore workflowProgress document
+    const progressDoc = await db.getOrCreateProgressDoc(userId, ACTIVE_SERVICE.key);
 
     // Map statuses
     const statusMap = new Map<string, string>();
-    userStatuses.forEach((status) => {
-      statusMap.set(status.documentKey, status.status);
-    });
+    if (progressDoc.documentStatuses) {
+      Object.entries(progressDoc.documentStatuses).forEach(([docKey, docVal]) => {
+        statusMap.set(docKey, docVal.status);
+      });
+    }
 
     // Combine documents with statuses
     const checklist = dbDocuments.map((doc) => ({
@@ -61,8 +63,8 @@ export async function updateDocumentStatus(req: AuthRequest, res: Response) {
       return res.status(404).json({ error: 'Document key not found.' });
     }
 
-    // Update status in Firestore
-    await db.upsertDocumentStatus(userId, documentKey, status);
+    // Update status in Firestore workflowProgress document
+    await db.upsertDocumentStatus(userId, ACTIVE_SERVICE.key, documentKey, status);
 
     return res.status(200).json({ success: true, message: 'Document status updated.' });
   } catch (error) {

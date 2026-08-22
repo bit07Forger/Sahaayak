@@ -3,81 +3,107 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   signOut, 
-  onAuthStateChanged 
+  onIdTokenChanged 
 } from 'firebase/auth';
-import { auth } from '../services/firebase';
-import { api } from '../services/api';
+import { auth, authPersistenceReady } from '../services/firebase';
 import type { UserProfile } from '../services/api';
 
 interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
+  status: 'loading' | 'authenticated' | 'unauthenticated';
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  getActiveIdToken: (forceRefresh?: boolean) => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState<'loading' | 'authenticated' | 'unauthenticated'>('loading');
 
   useEffect(() => {
-    // Listen to Firebase Auth state updates
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    // Subscribe to Firebase ID token changed events (covers both initial load & refreshes)
+    const unsubscribe = onIdTokenChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
-        try {
-          const idToken = await firebaseUser.getIdToken();
-          localStorage.setItem('sahaayak_token', idToken);
-          
-          // Fetch additional profile data from API
-          const data = await api.getMe();
-          setUser(data.user);
-        } catch (err) {
-          console.error('Failed to sync profile from API on auth change:', err);
-          setUser(null);
-        }
+        // Construct basic user profile client-side (no backend API synchronization in Step 4)
+        setUser({
+          id: firebaseUser.uid,
+          email: firebaseUser.email || '',
+          preferences: {
+            textSize: 'normal',
+            contrast: 'normal',
+            voiceSpeed: 'normal',
+            voiceEnabled: false,
+          },
+          progress: {
+            currentStep: 0,
+            status: 'NOT_STARTED',
+          },
+        });
+        setStatus('authenticated');
       } else {
-        localStorage.removeItem('sahaayak_token');
         setUser(null);
+        setStatus('unauthenticated');
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
   const login = async (email: string, password: string) => {
-    // Authenticate with Firebase Client SDK
+    if (authPersistenceReady) {
+      await authPersistenceReady;
+    }
     await signInWithEmailAndPassword(auth, email, password);
-    // Profile sync occurs automatically in onAuthStateChanged
   };
 
   const register = async (email: string, password: string) => {
-    // Create credential in Firebase Auth
+    if (authPersistenceReady) {
+      await authPersistenceReady;
+    }
     await createUserWithEmailAndPassword(auth, email, password);
-    // Profile sync occurs automatically in onAuthStateChanged
   };
 
   const logout = async () => {
     await signOut(auth);
-    localStorage.removeItem('sahaayak_token');
-    setUser(null);
   };
 
-  const refreshUser = async () => {
+  // Reusable helper to dynamically fetch the current Firebase ID token on request
+  const getActiveIdToken = async (forceRefresh = false): Promise<string | null> => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      return null;
+    }
     try {
-      const data = await api.getMe();
-      setUser(data.user);
-    } catch (err) {
-      console.error('Error refreshing user profile:', err);
+      return await currentUser.getIdToken(forceRefresh);
+    } catch (error) {
+      // Safe fallback return value on error, preventing raw Firebase details leakage
+      return null;
     }
   };
 
+  const refreshUser = async () => {
+    // No-op for Step 4 (prevents compilation errors in downstream accessibility modules)
+    return Promise.resolve();
+  };
+
+  const loading = status === 'loading';
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      status, 
+      login, 
+      register, 
+      logout, 
+      refreshUser,
+      getActiveIdToken 
+    }}>
       {children}
     </AuthContext.Provider>
   );

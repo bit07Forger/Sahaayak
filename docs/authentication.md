@@ -6,65 +6,58 @@ This document outlines the authentication and session verification design for **
 
 ## 1. Interaction Flow
 
-Authentication is managed client-side using the Firebase Web SDK. The backend verifies the session using the server-side `firebase-admin` SDK:
+Authentication is managed client-side using the Firebase Web SDK. Users register, log in, and log out directly on the frontend:
 
 ```text
-User ──► React Client ──► Firebase Auth (Client Login)
-              │
-              ├─► Receives Firebase ID Token
-              │
-              ▼ (REST Header: Bearer Token)
-         Express API Server
-              │
-              ├─► admin.auth().verifyIdToken(token)
-              │
-              ▼
-         Decodes UID ──► Performs Authorized Operations
+User ──► React Client (Vite) ──► Firebase Authentication
 ```
+
+Upon successful authentication, the Firebase Client SDK caches the user session and issues session ID tokens.
 
 ---
 
-## 2. Token Exchange & Validation
+## 2. Setup & Configuration
 
-### 1. Client-Side Authentication
-When a user registers or logs in, the React frontend executes Firebase SDK calls directly:
-- **Register**: `createUserWithEmailAndPassword(auth, email, password)`
-- **Login**: `signInWithEmailAndPassword(auth, email, password)`
-- **Logout**: `signOut(auth)`
+### 1. Client-Side Authentication Requirements
+To integrate Firebase Authentication in the frontend:
+- Enable the **Email/Password** sign-in provider in the Firebase Console under Build > Authentication.
+- Initialize the Firebase Client SDK using variables defined in `.env`.
+- Retrieve active token sessions for use in frontend states.
 
-On authorization change (`onAuthStateChanged`), the client fetches the Firebase ID Token:
-```typescript
-const idToken = await firebaseUser.getIdToken();
-localStorage.setItem('sahaayak_token', idToken);
+### 2. Security Considerations
+- **No Password Hashing or bcrypt**: Password hashing and verification are managed directly by Firebase Authentication.
+- **No Custom JWT Secrets**: The system relies on Firebase Identity Tokens, removing dependencies on local hashing or JWT generation algorithms.
+
+---
+
+## 3. Protected API Request Contract
+
+To request protected server resources, client applications must establish session context through HTTP headers.
+
+### 1. HTTP Request Header Format
+All protected endpoints require the client to supply a current Firebase ID Token in the standard Authorization header:
+```http
+Authorization: Bearer <FIREBASE_ID_TOKEN>
 ```
+- **Bearer Token Resolution**: The frontend fetches the dynamic token at request time using the session helper (`getActiveIdToken()`).
+- **Persistence Rules**: Raw token strings, refresh keys, or credentials must never be written to `localStorage`, cookies, or browser query fields.
 
-### 2. Backend Route Verification Middleware
-When protected routes are requested, the Bearer token is extracted from the `Authorization` header and verified against the Firebase Admin SDK:
-
+### 2. Trusted Server Identity Context
+Upon successful token validation on the backend, server controllers receive a clean verified user context injected into the request:
 ```typescript
-import { Request, Response, NextFunction } from 'express';
-import { auth } from '../services/firebaseAdmin';
-
-export async function authenticateToken(req: Request, res: Response, next: NextFunction) {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) return res.status(401).json({ error: 'Access token required.' });
-
-  try {
-    const decodedToken = await auth.verifyIdToken(token);
-    req.userId = decodedToken.uid;
-    req.userEmail = decodedToken.email;
-    next();
-  } catch (err) {
-    return res.status(403).json({ error: 'Invalid or expired Firebase session token.' });
-  }
+interface AuthenticatedRequestUser {
+  uid: string;
+  email?: string;
+  emailVerified?: boolean;
 }
 ```
 
----
+### 3. Server Authentication Error Reporting
+When authentication fails, the server responds with standard status codes:
+- **401 Unauthorized**: Missing, expired, or malformed bearer token in the `Authorization` header.
+  - JSON payload: `{ "error": "Unauthorized", "message": "Missing or invalid token." }`
+- **403 Forbidden**: Valid token supplied, but the authenticated user has insufficient permissions to access the resource.
+  - JSON payload: `{ "error": "Forbidden", "message": "Access denied." }`
+- **500 Internal Server Error**: Unexpected exception during validation, safely masked to hide stack traces.
+  - JSON payload: `{ "error": "Internal Server Error", "message": "Authentication check failed." }`
 
-## 3. Security Considerations
-- **No Password Hashing or bcrypt**: Password validation, hashing algorithms, and verification flows are managed by Google Firebase Authentication.
-- **No Custom JWT Secrets**: The session is validated cryptographically using Firebase public keys. Custom token generation libraries (like `jsonwebtoken`) have been removed from dependencies.
-- **Least Privilege Access**: The decoded `req.userId` UID is verified against the Firestore user collection parameters (`/users/{uid}`) to ensure users can only modify their own workflow progress and answers.

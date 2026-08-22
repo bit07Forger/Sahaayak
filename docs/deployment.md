@@ -12,33 +12,22 @@ This document outlines environment settings and deployment configurations for th
 
 ---
 
-## 2. Production Environment Variables
+## 2. Environment Variables
 
 ### Frontend Environment Variables (Vercel)
-Define these properties on the Vercel dashboard:
+Define these properties on the Vercel dashboard to configure the Firebase Web Client:
 ```env
-VITE_API_URL="https://sahaayak-backend.onrender.com"
-VITE_FIREBASE_API_KEY="AIzaSy..."
-VITE_FIREBASE_AUTH_DOMAIN="sahaayak-prod.firebaseapp.com"
-VITE_FIREBASE_PROJECT_ID="sahaayak-prod"
-VITE_FIREBASE_STORAGE_BUCKET="sahaayak-prod.appspot.com"
-VITE_FIREBASE_MESSAGING_SENDER_ID="1234567890"
-VITE_FIREBASE_APP_ID="1:1234567890:web:1234567890"
+VITE_API_URL="your-backend-api-url"
+VITE_FIREBASE_API_KEY="your-firebase-web-api-key"
+VITE_FIREBASE_AUTH_DOMAIN="your-project.firebaseapp.com"
+VITE_FIREBASE_PROJECT_ID="your-project-id"
+VITE_FIREBASE_STORAGE_BUCKET="your-project.appspot.com"
+VITE_FIREBASE_MESSAGING_SENDER_ID="your-sender-id"
+VITE_FIREBASE_APP_ID="your-app-id"
 ```
 
-### Backend Environment Variables (Render/Railway)
-Define these properties on the server hosting platform dashboard:
-```env
-PORT=5000
-FRONTEND_URL="https://sahaayak.vercel.app"
-USE_MOCK_AI="false"
-GEMINI_API_KEY="AIzaSy..."
-
-# Firebase Admin Service Account Configs
-FIREBASE_PROJECT_ID="sahaayak-prod"
-FIREBASE_CLIENT_EMAIL="firebase-adminsdk-xxxxx@sahaayak-prod.iam.gserviceaccount.com"
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQ...\n-----END PRIVATE KEY-----\n"
-```
+> [!NOTE]
+> Store real local values in a Git-ignored `.env` file and configure deployment values through the hosting environment. Do not commit real configuration values to example or documentation files.
 
 ---
 

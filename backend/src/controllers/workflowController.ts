@@ -28,8 +28,7 @@ export async function getCurrentWorkflow(req: AuthRequest, res: Response) {
       return res.status(401).json({ error: 'Unauthorized.' });
     }
 
-    const progress = await db.findProgressByUserId(userId);
-    const answers = await db.findAnswersByUserId(userId);
+    const progressDoc = await db.getOrCreateProgressDoc(userId, ACTIVE_SERVICE.key);
 
     // Format answers map for easier frontend consumption
     const formattedAnswers: Record<string, {
@@ -39,14 +38,16 @@ export async function getCurrentWorkflow(req: AuthRequest, res: Response) {
       isConfirmed: boolean;
     }> = {};
 
-    answers.forEach((ans) => {
-      formattedAnswers[ans.questionKey] = {
-        questionId: ans.questionKey,
-        rawValue: ans.rawValue,
-        interpretedValue: ans.interpretedValue,
-        isConfirmed: ans.isConfirmed,
-      };
-    });
+    if (progressDoc.answers) {
+      Object.entries(progressDoc.answers).forEach(([qKey, ans]) => {
+        formattedAnswers[qKey] = {
+          questionId: qKey,
+          rawValue: ans.rawValue,
+          interpretedValue: ans.interpretedValue,
+          isConfirmed: ans.isConfirmed,
+        };
+      });
+    }
 
     return res.status(200).json({
       service: {
@@ -55,8 +56,8 @@ export async function getCurrentWorkflow(req: AuthRequest, res: Response) {
         name: ACTIVE_SERVICE.name,
         description: ACTIVE_SERVICE.description,
       },
-      currentStep: progress.currentStep,
-      status: progress.status,
+      currentStep: progressDoc.currentStep,
+      status: progressDoc.status,
       questions: ACTIVE_SERVICE.questions,
       answers: formattedAnswers,
     });
