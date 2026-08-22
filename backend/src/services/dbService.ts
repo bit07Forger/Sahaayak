@@ -26,70 +26,98 @@ export interface Service {
 }
 
 export const ACTIVE_SERVICE: Service = {
-  key: 'accessible-parking-permit',
-  name: 'Accessible Parking Permit',
-  description: 'A permit that allows individuals with certified mobility impairments to park in designated accessible spaces close to building entrances.',
+  key: 'scholarship-preparation',
+  name: 'Scholarship Preparation',
+  description: 'A structured preparation workspace to help students organize personal details, academic background, motivation statements, and required document checklists before applying for scholarship opportunities.',
   questions: [
     {
-      key: 'name',
-      label: 'What is your full legal name?',
+      key: 'fullName',
+      label: 'Full Legal Name',
       type: 'text',
-      description: 'Speak or type your name exactly as it appears on your government identification card.',
+      description: 'Enter your full name as it appears on official school or identity records.',
       order: 1,
     },
     {
-      key: 'dob',
-      label: 'What is your date of birth?',
-      type: 'date',
-      description: 'State or select your birthday. You must be at least 18 years old to apply.',
+      key: 'email',
+      label: 'Email Address',
+      type: 'email',
+      description: 'Your primary contact email address.',
       order: 2,
     },
     {
-      key: 'has_impairment',
-      label: 'Do you have a qualified medical mobility limitation?',
-      type: 'boolean',
-      description: 'Say "Yes" or select Yes if a certified physician has diagnosed you with a mobility-limiting condition.',
+      key: 'schoolOrCollege',
+      label: 'School or College Name',
+      type: 'text',
+      description: 'Name of your current or most recent educational institution.',
       order: 3,
     },
     {
-      key: 'doctor_name',
-      label: "What is your certifying physician's name?",
+      key: 'fieldOfStudy',
+      label: 'Intended Course or Field of Study',
       type: 'text',
-      description: 'Enter the name of the licensed doctor who will sign your medical evaluation form.',
+      description: 'The discipline, degree, or subject area you are pursuing or plan to study.',
       order: 4,
     },
     {
-      key: 'doctor_license',
-      label: "What is your physician's medical license number?",
-      type: 'text',
-      description: "Enter your doctor's official registration or license number (typically 6-10 characters).",
+      key: 'studyLevel',
+      label: 'Current Study Level',
+      type: 'select',
+      description: 'Select your current education level (e.g., High School, Undergraduate, Postgraduate, Diploma).',
       order: 5,
     },
     {
-      key: 'vehicle_plate',
-      label: "What is your vehicle plate number? (Answer 'None' if passenger)",
+      key: 'academicStrengths',
+      label: 'Academic Strengths & Subjects',
       type: 'text',
-      description: 'Input your license plate number, or say "None" if you will be using this permit as a passenger in other vehicles.',
+      description: 'List subjects or academic areas where you demonstrate strong performance.',
       order: 6,
+    },
+    {
+      key: 'futureGoals',
+      label: 'Educational & Career Goals',
+      type: 'textarea',
+      description: 'Describe what you aim to achieve through your education and career over the next few years.',
+      order: 7,
+    },
+    {
+      key: 'motivationStatement',
+      label: 'Motivation Statement',
+      type: 'textarea',
+      description: 'Explain why you are applying for scholarship support and how it helps your education.',
+      order: 8,
+    },
+    {
+      key: 'achievements',
+      label: 'Key Achievements or Activities (Optional)',
+      type: 'textarea',
+      description: 'Mention any academic awards, leadership roles, or community activities (optional).',
+      order: 9,
+    },
+    {
+      key: 'additionalContext',
+      label: 'Additional Circumstances (Optional)',
+      type: 'textarea',
+      description: 'Optional space to describe any personal background context you choose to share. Do not enter passwords, ID numbers, or bank details.',
+      order: 10,
     },
   ],
   documents: [
     {
-      key: 'identity_proof',
-      label: 'Proof of Identity',
-      description: 'A scanned copy or clear photo of your Government Driver License, Passport, or State ID.',
+      key: 'transcript',
+      label: 'Academic record or transcript — confirm what your target opportunity requires',
+      description: 'Copy of your recent marksheet, transcript, or academic record.',
       type: 'REQUIRED',
     },
     {
-      key: 'medical_certificate',
-      label: 'Medical Certification Form',
-      description: 'The physical Accessible Parking application form filled and signed by your physician within the last 6 months.',
+      key: 'personal_statement',
+      label: 'Personal statement draft',
+      description: 'Draft of your motivation statement and educational goals.',
       type: 'REQUIRED',
     },
     {
-      key: 'vehicle_registration',
-      label: 'Vehicle Registration Copy',
-      description: 'Current registration certificate for the primary vehicle associated with this permit. (Optional for passengers).',
+      key: 'recommendation_contact',
+      label: 'Recommendation/contact details — if required by the opportunity',
+      description: 'Contact details of a teacher, mentor, or reference if required by your target scholarship.',
       type: 'OPTIONAL',
     },
   ],
@@ -114,7 +142,10 @@ export async function initializeFirestoreData() {
 
   try {
     const serviceRef = firestore.collection('services').doc(ACTIVE_SERVICE.key);
-    const doc = await serviceRef.get();
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Firestore seed connection timed out')), 2500)
+    );
+    const doc = (await Promise.race([serviceRef.get(), timeoutPromise])) as any;
     if (!doc.exists) {
       console.log(`[Auto Seed] Seeding service "${ACTIVE_SERVICE.key}" in Firestore project "${projectId}"...`);
       await serviceRef.set({

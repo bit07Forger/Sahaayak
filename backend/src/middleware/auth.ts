@@ -8,6 +8,7 @@ import { AuthenticatedRequest, AuthenticatedRequestUser } from '../types/auth';
 export interface AuthRequest extends Request {
   userId?: string;
   userEmail?: string;
+  requestId?: string;
 }
 
 /**
@@ -44,7 +45,7 @@ export async function requireFirebaseAuth(req: AuthenticatedRequest, res: Respon
 
   try {
     const decodedToken = await adminAuth.verifyIdToken(token);
-    
+
     // Attach only the minimal approved verified-user context
     const userContext: AuthenticatedRequestUser = {
       uid: decodedToken.uid,

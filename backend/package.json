@@ -10,8 +10,8 @@
     "seed:services:dry-run": "node scripts/seed.mjs --dry-run",
     "seed:services:apply": "node scripts/seed.mjs --apply",
     "seed:services:check": "node scripts/seed.mjs --check",
-    "test": "vitest run --exclude tests/firestoreRules.test.ts",
-    "test:backend": "vitest run --exclude tests/firestoreRules.test.ts",
+    "test": "vitest run --exclude tests/firestoreRules.test.ts --exclude 'dist/**'",
+    "test:backend": "vitest run --exclude tests/firestoreRules.test.ts --exclude 'dist/**'",
     "test:rules": "npx -y firebase-tools@latest emulators:exec --only firestore --project sahaayak-rules-test \"vitest run tests/firestoreRules.test.ts\""
   },
   "dependencies": {

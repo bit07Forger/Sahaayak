@@ -2,6 +2,57 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --surface-page: #F7F4ED;
+  --surface-panel: #FFFFFF;
+  --surface-soft: #FBF8F3;
+
+  --ink-primary: #142A4A;
+  --ink-secondary: #56667D;
+  --ink-muted: #8A98A8;
+
+  --brand-indigo: #142A4A;
+  --brand-indigo-dark: #0D1C33;
+
+  --brand-saffron: #E89400;
+  --brand-sage: #52785F;
+
+  --border-subtle: #DDD8CD;
+
+  --shadow-soft: 0 10px 30px rgba(20, 42, 74, 0.06);
+
+  --font-hyperlegible: 'Atkinson Hyperlegible', 'Noto Sans Kannada', system-ui, -apple-system, sans-serif;
+  --font-fraunces: 'Fraunces', 'Noto Serif Kannada', Georgia, serif;
+}
+
+html[lang="kn"] .font-fraunces {
+  font-family: 'Noto Serif Kannada', 'Fraunces', Georgia, serif;
+}
+
+html[lang="kn"] .font-hyperlegible {
+  font-family: 'Noto Sans Kannada', 'Atkinson Hyperlegible', sans-serif;
+}
+
+[data-theme="dark"] {
+  --surface-page: #111827;
+  --surface-panel: #1E2B42;
+  --surface-soft: #162234;
+
+  --ink-primary: #F4F1EA;
+  --ink-secondary: #CBD5E1;
+  --ink-muted: #94A3B8;
+
+  --brand-indigo: #8EA7D6;
+  --brand-indigo-dark: #6882B5;
+
+  --brand-saffron: #E99A08;
+  --brand-sage: #7BAA86;
+
+  --border-subtle: #2D3D58;
+
+  --shadow-soft: 0 10px 40px rgba(0, 0, 0, 0.35);
+}
+
 /* Custom Accessibility Size Scaling System */
 html.text-scale-normal {
   font-size: 16px;
@@ -15,65 +66,385 @@ html.text-scale-xlarge {
   font-size: 24px;
 }
 
-/* Premium Styling Base */
+/* Base Body Styles */
 body {
   transition: background-color 0.2s ease, color 0.2s ease, font-size 0.2s ease;
+  min-height: 100vh;
 }
 
-/* Normal Mode Premium Slate Theme */
+/* Scholarship Studio Normal Mode Theme */
 body.theme-normal {
-  background-color: #0f172a; /* Slate 900 */
-  color: #f8fafc; /* Slate 50 */
-  font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--surface-page);
+  color: var(--ink-primary);
+  font-family: var(--font-hyperlegible);
+  background-image: radial-gradient(rgba(45, 58, 86, 0.03) 1px, transparent 0);
+  background-size: 24px 24px;
 }
 
-/* Accessible High Contrast System (Black, White, Neon Yellow) */
+/* High Contrast Accessibility Mode */
 body.theme-high-contrast {
   background-color: #000000 !important;
-  color: #ffffff !important;
-  font-family: system-ui, -apple-system, sans-serif;
+  color: #FFFFFF !important;
+  font-family: var(--font-hyperlegible);
+  background-image: none !important;
 }
 
-/* Contrast Overrides for Components */
-.theme-high-contrast button, 
-.theme-high-contrast a, 
-.theme-high-contrast input, 
-.theme-high-contrast select, 
+/* Contrast Overrides for Form Controls & Buttons */
+.theme-high-contrast button,
+.theme-high-contrast a,
+.theme-high-contrast input,
+.theme-high-contrast select,
 .theme-high-contrast textarea {
   background-color: #000000 !important;
-  color: #ffffff !important;
-  border: 3px solid #facc15 !important; /* Thick Yellow Border */
-  outline-color: #facc15 !important;
+  color: #FFFFFF !important;
+  border: 3px solid #FACC15 !important;
+  outline-color: #FACC15 !important;
   font-weight: 700 !important;
 }
 
-.theme-high-contrast button:hover, 
+.theme-high-contrast button:hover,
 .theme-high-contrast a:hover {
-  background-color: #facc15 !important;
+  background-color: #FACC15 !important;
   color: #000000 !important;
   cursor: pointer;
 }
 
-/* Focus indicator visibility */
+/* Enhanced Focus Ring */
 :focus-visible {
-  outline: 4px solid #3b82f6 !important;
-  outline-offset: 2px;
+  outline: 3px solid var(--brand-indigo) !important;
+  outline-offset: 3px !important;
 }
 
 .theme-high-contrast :focus-visible {
-  outline: 4px solid #facc15 !important;
-  outline-offset: 2px;
+  outline: 4px solid #FACC15 !important;
+  outline-offset: 3px !important;
 }
 
-/* Micro-animations */
-.hover-scale {
-  transition: transform 0.15s ease;
+/* Custom Thin Scrollbar */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
-.hover-scale:hover {
-  transform: scale(1.02);
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: var(--surface-panel-subtle);
+  border-radius: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--border-medium);
+  border-radius: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-muted);
 }
 
-/* Interactive elements scaling */
-button, input, select {
-  min-height: 48px; /* Mobile accessibility minimum target size */
+/* Explicit Button & Interactive Control Contracts */
+.btn-primary {
+  background-color: var(--brand-indigo) !important;
+  color: #FFFFFF !important;
+  border: 1px solid var(--brand-indigo) !important;
+}
+
+.btn-primary:hover {
+  background-color: var(--brand-indigo-hover) !important;
+  color: #FFFFFF !important;
+}
+
+.btn-secondary {
+  background-color: var(--surface-panel) !important;
+  color: var(--ink-primary) !important;
+  border: 1.5px solid var(--border-medium) !important;
+}
+
+.btn-secondary:hover {
+  background-color: var(--surface-panel-subtle) !important;
+  color: var(--ink-primary) !important;
+  border-color: var(--ink-primary) !important;
+}
+
+.btn-quiet {
+  background-color: transparent !important;
+  color: var(--ink-primary) !important;
+  border: 1px solid transparent !important;
+}
+
+.btn-quiet:hover {
+  background-color: rgba(45, 58, 86, 0.05) !important;
+  color: var(--ink-primary) !important;
+}
+
+/* Form Input Field Contract */
+.input-field {
+  background-color: #FFFFFF !important;
+  color: var(--ink-primary) !important;
+  border: 1.5px solid var(--border-medium) !important;
+}
+
+.input-field:focus-visible {
+  border-color: var(--brand-indigo) !important;
+  outline: 3px solid var(--brand-saffron) !important;
+  outline-offset: 1px !important;
+}
+
+/* High Contrast Override System */
+.theme-high-contrast .btn-primary,
+.theme-high-contrast .btn-secondary,
+.theme-high-contrast .btn-quiet,
+.theme-high-contrast .input-field {
+  background-color: #000000 !important;
+  color: #FFFFFF !important;
+  border: 3px solid #FACC15 !important;
+}
+
+.theme-high-contrast .btn-primary:hover,
+.theme-high-contrast .btn-secondary:hover,
+.theme-high-contrast .btn-quiet:hover {
+  background-color: #FACC15 !important;
+  color: #000000 !important;
+}
+
+/* Smooth Fade In Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Respect Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Champagne Fizz Aura Background System */
+.aura-container {
+  position: relative;
+  overflow: hidden;
+  min-height: 100vh;
+  background-color: #faf8f2;
+}
+
+.aura-content-wrapper {
+  position: relative;
+  z-index: 1;
+}
+
+.aura-layer {
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.6;
+}
+
+/* Layer 1: Soft Champagne Gold */
+.aura-layer-1 {
+  top: -10%;
+  left: -5%;
+  width: 50vw;
+  height: 50vw;
+  max-width: 600px;
+  max-height: 600px;
+  background: radial-gradient(circle, rgba(243, 229, 198, 0.85) 0%, rgba(247, 237, 215, 0.4) 70%, transparent 100%);
+  animation: auraFloat1 18s ease-in-out infinite alternate;
+}
+
+/* Layer 2: Warm Ivory Glow */
+.aura-layer-2 {
+  bottom: -10%;
+  right: -5%;
+  width: 55vw;
+  height: 55vw;
+  max-width: 650px;
+  max-height: 650px;
+  background: radial-gradient(circle, rgba(248, 238, 216, 0.9) 0%, rgba(244, 228, 193, 0.35) 70%, transparent 100%);
+  animation: auraFloat2 22s ease-in-out infinite alternate;
+}
+
+/* Layer 3: Subtle Saffron Ambient Accent */
+.aura-layer-3 {
+  top: 40%;
+  left: 30%;
+  width: 40vw;
+  height: 40vw;
+  max-width: 500px;
+  max-height: 500px;
+  background: radial-gradient(circle, rgba(245, 218, 168, 0.4) 0%, rgba(249, 239, 219, 0.2) 70%, transparent 100%);
+  animation: auraFloat3 25s ease-in-out infinite alternate;
+}
+
+@keyframes auraFloat1 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(30px, 40px) scale(1.08); }
+}
+
+@keyframes auraFloat2 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-40px, -30px) scale(1.05); }
+}
+
+@keyframes auraFloat3 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(25px, -20px) scale(1.1); }
+}
+
+/* Disable aura effects in High Contrast Mode or Reduced Motion */
+.theme-high-contrast .aura-container {
+  background-color: #000000 !important;
+}
+
+.theme-high-contrast .aura-layer {
+  display: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aura-layer {
+    animation: none !important;
+  }
+}
+
+/* Liquid Glass Button Styles */
+.liquid-glass-btn {
+  background: transparent;
+  box-shadow: 0 8px 24px -2px rgba(45, 58, 86, 0.25), 0 2px 6px -1px rgba(45, 58, 86, 0.15);
+}
+
+.liquid-glass-surface {
+  background: linear-gradient(135deg, rgba(45, 58, 86, 0.98) 0%, rgba(30, 38, 56, 0.99) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.theme-high-contrast .liquid-glass-btn {
+  background-color: #000000 !important;
+  color: #FFFFFF !important;
+  border: 3px solid #FACC15 !important;
+  box-shadow: none !important;
+}
+
+.theme-high-contrast .liquid-glass-surface,
+.theme-high-contrast .liquid-glass-rim,
+.theme-high-contrast .liquid-glass-shine {
+  display: none !important;
+}
+
+.theme-high-contrast .liquid-glass-btn:hover {
+  background-color: #FACC15 !important;
+  color: #000000 !important;
+}
+
+/* Strict Horizontal Side-by-Side Authentication Layout */
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(400px, 460px);
+  align-items: center;
+  column-gap: 80px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 48px 64px;
+}
+
+@media (max-width: 767px) {
+  .auth-page {
+    grid-template-columns: 1fr;
+    padding: 32px 24px;
+    column-gap: 0;
+    row-gap: 40px;
+  }
+}
+
+/* Password Component Dedicated 52px Eye Area System */
+.password-wrapper {
+  position: relative !important;
+  width: 100% !important;
+  height: 54px !important;
+  box-sizing: border-box !important;
+}
+
+.password-input {
+  width: 100% !important;
+  height: 54px !important;
+  box-sizing: border-box !important;
+  padding-left: 16px !important;
+  padding-right: 64px !important;
+  border: 1px solid #D7DCE5 !important;
+  border-radius: 12px !important;
+  font-size: 16px !important;
+  color: #1E2638 !important;
+  background-color: #FFFFFF !important;
+  outline: none !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.password-input:focus {
+  border-color: #2D3A56 !important;
+  box-shadow: 0 0 0 3px rgba(45, 58, 86, 0.12) !important;
+}
+
+.password-toggle-area {
+  position: absolute !important;
+  top: 1px !important;
+  right: 1px !important;
+  height: 52px !important;
+  width: 52px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  pointer-events: none !important;
+  z-index: 10 !important;
+}
+
+.password-toggle {
+  pointer-events: auto !important;
+  width: 44px !important;
+  height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 10px !important;
+  cursor: pointer !important;
+  color: #667085 !important;
+  transition: background-color 0.15s ease, color 0.15s ease !important;
+}
+
+.password-toggle:hover {
+  background-color: rgba(45, 58, 86, 0.06) !important;
+  color: #1E2638 !important;
+}
+
+.password-toggle:focus-visible {
+  outline: 2px solid #2D3A56 !important;
+  outline-offset: 1px !important;
+}
+
+.theme-high-contrast .password-input {
+  background-color: #000000 !important;
+  color: #FFFFFF !important;
+  border: 3px solid #FACC15 !important;
+}
+
+.theme-high-contrast .password-toggle {
+  color: #FACC15 !important;
+}
+
+.theme-high-contrast .password-toggle:hover {
+  background-color: #FACC15 !important;
+  color: #000000 !important;
 }

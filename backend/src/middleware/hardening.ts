@@ -69,16 +69,26 @@ export function loggerMiddleware(req: any, res: Response, next: NextFunction) {
  */
 const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS
   ? process.env.CORS_ALLOWED_ORIGINS.split(',').map(o => o.trim())
-  : [process.env.FRONTEND_URL || 'http://localhost:5173'];
+  : [
+      process.env.FRONTEND_URL || 'http://localhost:5173',
+      'http://127.0.0.1:5173',
+      'http://localhost:5174',
+      'http://127.0.0.1:5174',
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+    ];
 
 export const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
     // If no origin (e.g. server-to-server or local script requests), allow or restrict based on design.
-    // Express apps receive undefined origin for simple same-origin requests in non-browser envs.
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (
+      !origin ||
+      allowedOrigins.includes(origin) ||
+      /^http:\/\/(localhost|127\.0\.0\.1):(5173|5174|5175|3000)$/.test(origin)
+    ) {
       callback(null, true);
     } else {
-      callback(null, false); // Block other cross-origins safely
+      callback(new Error('CORS origin not allowed'));
     }
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

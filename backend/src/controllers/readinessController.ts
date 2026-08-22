@@ -50,7 +50,7 @@ export async function getReadiness(req: AuthRequest, res: Response) {
       totalQuestionsCount: dbQuestions.length,
       missingQuestions,
       missingDocuments,
-      summaryStatus: isReady ? 'Ready to submit' : 'More information required',
+      summaryStatus: isReady ? 'Preparation draft complete' : 'Preparation draft in progress',
     });
   } catch (error) {
     console.error('Error calculating readiness:', error);

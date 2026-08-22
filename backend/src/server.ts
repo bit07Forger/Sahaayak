@@ -6,6 +6,7 @@ import { getServices, getCurrentWorkflow } from './controllers/workflowControlle
 import { interpretAnswer, confirmAnswer, validateInput } from './controllers/answerController';
 import { getChecklist, updateDocumentStatus } from './controllers/documentController';
 import { getReadiness } from './controllers/readinessController';
+import { handleChat } from './controllers/chatController';
 import {
   requestIdMiddleware,
   loggerMiddleware,
@@ -75,6 +76,9 @@ app.post('/api/documents/update', authenticateToken, updateDocumentStatus);
 
 // Readiness Summary
 app.get('/api/readiness', authenticateToken, getReadiness);
+
+// Protected Chat Endpoint
+app.post('/api/chat', authenticateToken, handleChat);
 
 // 404 Catch-all handler
 app.use((req, res, next) => {

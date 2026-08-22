@@ -1,6 +1,6 @@
 import { auth, authPersistenceReady } from './firebase';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 async function getAuthHeader(): Promise<Record<string, string>> {
   if (authPersistenceReady) {
@@ -99,6 +99,18 @@ export interface ReadinessSummary {
   summaryStatus: string;
 }
 
+export interface ChatSource {
+  label: string;
+  url?: string;
+}
+
+export interface ChatResponse {
+  status: 'answered' | 'refusal' | 'unavailable' | 'rate_limited' | 'invalid_request';
+  message: string;
+  sources?: ChatSource[];
+  requestId?: string;
+}
+
 export const api = {
   // Session API
   getMe: () => request<{ user: UserProfile }>('/auth/me'),
@@ -153,4 +165,11 @@ export const api = {
 
   // Readiness API
   getReadiness: () => request<ReadinessSummary>('/readiness'),
+
+  // Chat API
+  sendChatMessage: (message: string, serviceId = 'scholarship-preparation') =>
+    request<ChatResponse>('/chat', {
+      method: 'POST',
+      body: JSON.stringify({ message, serviceId }),
+    }),
 };

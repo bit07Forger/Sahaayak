@@ -21,7 +21,7 @@ export interface VoiceRecognitionResult {
 export function startListening(
   onResult: (result: VoiceRecognitionResult) => void,
   onError: (error: string) => void,
-  lang: string = 'en-IN'
+  lang: string = 'en-US'
 ): (() => void) | null {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -30,27 +30,48 @@ export function startListening(
     return null;
   }
 
-  const recognition = new SpeechRecognition();
-  recognition.lang = lang;
-  recognition.continuous = false;
-  recognition.interimResults = true;
+  try {
+    const recognition = new SpeechRecognition();
+    recognition.lang = lang;
+    recognition.continuous = true;
+    recognition.interimResults = true;
 
-  recognition.onresult = (event: any) => {
-    const result = event.results[event.results.length - 1];
-    onResult({
-      transcript: result[0].transcript,
-      isFinal: result.isFinal,
-    });
-  };
+    recognition.onresult = (event: any) => {
+      let fullTranscript = '';
+      let isFinal = false;
 
-  recognition.onerror = (event: any) => {
-    onError(`Speech recognition error: ${event.error}`);
-  };
+      for (let i = 0; i < event.results.length; i++) {
+        fullTranscript += event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          isFinal = true;
+        }
+      }
 
-  recognition.start();
+      onResult({
+        transcript: fullTranscript,
+        isFinal,
+      });
+    };
 
-  // Return a stop function so the caller can cancel listening if needed
-  return () => recognition.stop();
+    recognition.onerror = (event: any) => {
+      if (event.error !== 'no-speech') {
+        onError(`Speech recognition error: ${event.error}`);
+      }
+    };
+
+    recognition.start();
+
+    return () => {
+      try {
+        recognition.stop();
+      } catch (e) {
+        // Ignore stop errors if already stopped
+      }
+    };
+  } catch (err: any) {
+    onError(`Failed to start speech recognition: ${err.message || err}`);
+    return null;
+  }
 }
 
 /**

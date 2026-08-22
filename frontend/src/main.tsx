@@ -5,11 +5,15 @@ import App from './App.tsx'
 import { AuthProvider } from './contexts/AuthContext'
 import { AccessibilityProvider } from './contexts/AccessibilityContext'
 
+import { LanguageProvider } from './contexts/LanguageContext'
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
       <AccessibilityProvider>
-        <App />
+        <LanguageProvider>
+          <App />
+        </LanguageProvider>
       </AccessibilityProvider>
     </AuthProvider>
   </StrictMode>,

@@ -12,67 +12,62 @@ function getCacheKey(questionKey: string, rawInput: string): string {
 function validateAnswer(key: string, value: string): string | null {
   const cleanVal = value.trim();
 
+  // Optional fields do not require input
+  if (key === 'achievements' || key === 'additionalContext') {
+    return null;
+  }
+
   if (!cleanVal) {
     return 'Input cannot be empty.';
   }
 
   switch (key) {
-    case 'name':
+    case 'fullName':
       if (cleanVal.length < 2) {
-        return 'Name must be at least 2 characters long.';
-      }
-      if (!/^[a-zA-Z\s.-]+$/.test(cleanVal)) {
-        return 'Name can only contain letters, spaces, dots, or hyphens.';
+        return 'Full legal name must be at least 2 characters long.';
       }
       break;
 
-    case 'dob':
-      const dobDate = new Date(cleanVal);
-      if (isNaN(dobDate.getTime())) {
-        return 'Please enter a valid date in YYYY-MM-DD format.';
-      }
-      const today = new Date();
-      if (dobDate > today) {
-        return 'Date of birth cannot be in the future.';
-      }
-      let age = today.getFullYear() - dobDate.getFullYear();
-      const m = today.getMonth() - dobDate.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < dobDate.getDate())) {
-        age--;
-      }
-      if (age < 18) {
-        return 'You must be at least 18 years old to apply for this permit.';
+    case 'email':
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(cleanVal)) {
+        return 'Please enter a valid email address.';
       }
       break;
 
-    case 'has_impairment':
-      const lowerImp = cleanVal.toLowerCase();
-      if (lowerImp !== 'true' && lowerImp !== 'false') {
-        return 'Impairment selection must be Yes or No.';
-      }
-      break;
-
-    case 'doctor_name':
+    case 'schoolOrCollege':
       if (cleanVal.length < 2) {
-        return "Physician name must be at least 2 characters long.";
-      }
-      if (!/^[a-zA-Z\s.-]+$/.test(cleanVal)) {
-        return 'Physician name can only contain letters, spaces, dots, or hyphens.';
+        return 'School or college name must be at least 2 characters long.';
       }
       break;
 
-    case 'doctor_license':
-      if (!/^[a-zA-Z0-9]{6,10}$/.test(cleanVal)) {
-        return 'Medical license number must be alphanumeric and between 6 to 10 characters long.';
+    case 'fieldOfStudy':
+      if (cleanVal.length < 2) {
+        return 'Intended course or field of study must be at least 2 characters long.';
       }
       break;
 
-    case 'vehicle_plate':
-      if (cleanVal.toLowerCase() === 'none') {
-        break;
+    case 'studyLevel':
+      if (!cleanVal) {
+        return 'Please select a study level.';
       }
-      if (!/^[a-zA-Z0-9\s]{3,10}$/.test(cleanVal)) {
-        return 'License plate must be alphanumeric, between 3 to 10 characters, or "None".';
+      break;
+
+    case 'academicStrengths':
+      if (cleanVal.length < 2) {
+        return 'Academic strengths must be at least 2 characters long.';
+      }
+      break;
+
+    case 'futureGoals':
+      if (cleanVal.length < 2) {
+        return 'Educational and career goals must be at least 2 characters long.';
+      }
+      break;
+
+    case 'motivationStatement':
+      if (cleanVal.length < 2) {
+        return 'Motivation statement must be at least 2 characters long.';
       }
       break;
 
@@ -86,65 +81,15 @@ function validateAnswer(key: string, value: string): string | null {
 // Regex Fallback Parser for Local Match Mode (Demo stability)
 function runLocalMockInterpretation(questionKey: string, rawInput: string): string {
   const text = rawInput.trim();
-  const lowerText = text.toLowerCase();
 
   switch (questionKey) {
-    case 'name':
+    case 'fullName':
       const nameMatch = rawInput.match(/(?:my name is|i am|called)\s+([a-zA-Z\s.-]+)/i);
       return nameMatch ? nameMatch[1].trim() : text;
 
-    case 'dob':
-      const isoMatch = text.match(/\d{4}-\d{2}-\d{2}/);
-      if (isoMatch) return isoMatch[0];
-
-      const months = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
-      let foundMonth = -1;
-      let day = 1;
-      let year = 1990;
-
-      months.forEach((m, idx) => {
-        if (lowerText.includes(m)) {
-          foundMonth = idx;
-        }
-      });
-
-      const yearMatch = text.match(/\b(19\d{2}|20\d{2})\b/);
-      if (yearMatch) year = parseInt(yearMatch[0], 10);
-
-      const dayMatch = text.match(/\b([123]?\d)(?:st|nd|rd|th)?\b/);
-      if (dayMatch) day = parseInt(dayMatch[1], 10);
-
-      if (foundMonth !== -1) {
-        const mm = String(foundMonth + 1).padStart(2, '0');
-        const dd = String(day).padStart(2, '0');
-        return `${year}-${mm}-${dd}`;
-      }
-
-      return '1995-05-10';
-
-    case 'has_impairment':
-      if (lowerText.includes('yes') || lowerText.includes('yeah') || lowerText.includes('true') || lowerText.includes('i do') || lowerText.includes('have limitation')) {
-        return 'true';
-      }
-      if (lowerText.includes('no') || lowerText.includes('dont') || lowerText.includes('not') || lowerText.includes('false')) {
-        return 'false';
-      }
-      return 'true';
-
-    case 'doctor_name':
-      const docMatch = rawInput.match(/(?:dr\.|doctor)\s+([a-zA-Z\s.-]+)/i);
-      return docMatch ? docMatch[1].trim() : text;
-
-    case 'doctor_license':
-      const licMatch = text.match(/[a-zA-Z0-9]{6,10}/);
-      return licMatch ? licMatch[0] : text;
-
-    case 'vehicle_plate':
-      if (lowerText.includes('none') || lowerText.includes('no vehicle') || lowerText.includes('passenger')) {
-        return 'None';
-      }
-      const plateMatch = text.match(/[a-zA-Z0-9\s]{3,10}/);
-      return plateMatch ? plateMatch[0].toUpperCase().replace(/\s+/g, '') : text;
+    case 'email':
+      const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+      return emailMatch ? emailMatch[0] : text;
 
     default:
       return text;

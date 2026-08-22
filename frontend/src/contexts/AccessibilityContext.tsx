@@ -8,6 +8,8 @@ interface AccessibilityContextType {
   contrast: string; // normal, high
   voiceSpeed: string; // slow, normal, fast
   voiceEnabled: boolean;
+  theme: 'light' | 'dark';
+  toggleTheme: () => void;
   updatePreferences: (prefs: Partial<UserPreferences>) => Promise<void>;
   speak: (text: string) => void;
   speakStop: () => void;
@@ -22,6 +24,23 @@ export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({
   const [contrast, setContrast] = useState('normal');
   const [voiceSpeed, setVoiceSpeed] = useState('normal');
   const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('sahaayak_theme');
+    if (saved === 'dark' || saved === 'light') return saved;
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return 'dark';
+    }
+    return 'light';
+  });
+
+  // Toggle theme mode
+  const toggleTheme = () => {
+    setTheme(prev => {
+      const next = prev === 'light' ? 'dark' : 'light';
+      localStorage.setItem('sahaayak_theme', next);
+      return next;
+    });
+  };
 
   // Synchronize state with authenticated user preferences
   useEffect(() => {
@@ -33,6 +52,11 @@ export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({
       setVoiceEnabled(!!voiceEnabled);
     }
   }, [user]);
+
+  // Apply Theme attribute to document element
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
 
   // Apply HTML root and body classes
   useEffect(() => {
@@ -106,6 +130,8 @@ export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({
         contrast,
         voiceSpeed,
         voiceEnabled,
+        theme,
+        toggleTheme,
         updatePreferences,
         speak,
         speakStop,
