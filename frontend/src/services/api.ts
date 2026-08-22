@@ -117,7 +117,15 @@ export const api = {
 
   // Answers API
   interpretAnswer: (questionKey: string, rawInput: string) =>
-    request<{ interpretedValue: string; warning?: string }>('/answers/interpret', {
+    request<{
+      interpretedValue: string;
+      confidence: number;
+      needsClarification: boolean;
+      clarificationQuestion: string | null;
+      plainExplanation: string;
+      source: string;
+      warning?: string;
+    }>('/answers/interpret', {
       method: 'POST',
       body: JSON.stringify({ questionKey, rawInput }),
     }),
