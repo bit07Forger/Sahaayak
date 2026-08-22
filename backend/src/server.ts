@@ -25,7 +25,7 @@ app.get('/api/services', authenticateToken, getServices);
 app.get('/api/workflows/current', authenticateToken, getCurrentWorkflow);
 
 // Answers & Interpretation
-app.post('/api/answers/interpret', authenticateToken, interpretAnswer);
+app.post('/api/answers/interpret', interpretAnswer);
 app.post('/api/answers/confirm', authenticateToken, confirmAnswer);
 app.post('/api/answers/validate', authenticateToken, validateInput);
 
