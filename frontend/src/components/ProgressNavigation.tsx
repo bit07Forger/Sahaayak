@@ -105,7 +105,7 @@ export const ProgressNavigation: React.FC<ProgressNavigationProps> = ({
 
                 {/* Step Label Underneath Node */}
                 <span
-                  className={`font-hyperlegible text-xs transition-colors ${
+                  className={`font-hyperlegible text-[10px] sm:text-xs transition-colors text-center max-w-[64px] truncate ${
                     isCurrent
                       ? 'text-[#34456B] dark:text-[#91A4D6] font-bold'
                       : isCompleted

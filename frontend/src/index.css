@@ -348,22 +348,23 @@ body.theme-high-contrast {
 
 /* Strict Horizontal Side-by-Side Authentication Layout */
 .auth-page {
-  min-height: 100vh;
+  min-height: calc(100vh - 72px);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(400px, 460px);
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 460px);
   align-items: center;
-  column-gap: 80px;
+  column-gap: min(5vw, 64px);
   max-width: 1280px;
+  width: 100%;
   margin: 0 auto;
-  padding: 48px 64px;
+  padding: clamp(24px, 4vw, 48px) clamp(16px, 4vw, 48px);
 }
 
-@media (max-width: 767px) {
+@media (max-width: 1023px) {
   .auth-page {
     grid-template-columns: 1fr;
-    padding: 32px 24px;
+    padding: 24px 16px;
     column-gap: 0;
-    row-gap: 40px;
+    row-gap: 32px;
   }
 }
 

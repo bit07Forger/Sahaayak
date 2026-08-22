@@ -815,13 +815,12 @@ const App: React.FC = () => {
         {liveAnnouncement}
       </div>
 
-      {/* SCHOLARSHIP STUDIO REFINED STICKY HEADER */}
-      <header className={`sticky top-0 z-40 h-[72px] transition-colors duration-200 border-b backdrop-blur-md ${
+      <header className={`sticky top-0 z-40 min-h-[72px] py-2 transition-colors duration-200 border-b backdrop-blur-md flex items-center ${
         contrast === 'high'
           ? 'bg-black text-white border-yellow-400'
           : 'bg-[var(--surface-panel)]/90 text-[var(--ink-primary)] border-[var(--border-subtle)] shadow-sm'
       }`}>
-        <div className="w-[calc(100%-48px)] max-w-[1280px] h-full mx-auto flex items-center justify-between">
+        <div className="w-full max-w-[1280px] px-4 sm:px-6 lg:px-8 mx-auto flex items-center justify-between gap-3">
           {/* Left: Enhanced Sahaayak Wordmark Logo */}
           <div
             className="flex items-center gap-3.5 cursor-pointer shrink-0 group transition-all"
@@ -1070,7 +1069,7 @@ const App: React.FC = () => {
       )}
 
       {/* MAIN CONTAINER WORKSPACE */}
-      <main id="main-content" className="flex-1 w-[calc(100%-48px)] max-w-[1280px] mx-auto py-8 focus:outline-none" tabIndex={-1}>
+      <main id="main-content" className="flex-1 w-full max-w-[1280px] px-4 sm:px-6 lg:px-8 mx-auto py-6 sm:py-8 focus:outline-none" tabIndex={-1}>
 
         {/* STATE: SIGNED IN VIEW (AUTHENTICATED SCHOLARSHIP WORKSPACE SHELL) */}
         {status === 'authenticated' && (

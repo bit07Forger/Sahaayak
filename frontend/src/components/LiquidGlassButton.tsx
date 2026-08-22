@@ -23,7 +23,7 @@ export const LiquidGlassButton: React.FC<LiquidGlassButtonProps> = ({
       <button
         type={type}
         disabled={disabled || isSubmitting}
-        className={`group inline-flex items-center justify-between gap-3 h-[52px] px-6 rounded-2xl font-hyperlegible text-sm font-semibold transition-all duration-200 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#34456B]/30 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer bg-[#FFFFFF] dark:bg-[#1E2B42] text-[#172033] dark:text-[#F4F1EA] border border-[#E6E2D9] dark:border-[#2D3D58] hover:bg-[#FBFAF7] dark:hover:bg-[#253550] shadow-sm ${className}`}
+        className={`group inline-flex items-center justify-between gap-3 min-h-[52px] h-auto px-6 py-3 rounded-2xl font-hyperlegible text-sm font-semibold transition-all duration-200 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#34456B]/30 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer bg-[#FFFFFF] dark:bg-[#1E2B42] text-[#172033] dark:text-[#F4F1EA] border border-[#E6E2D9] dark:border-[#2D3D58] hover:bg-[#FBFAF7] dark:hover:bg-[#253550] shadow-sm ${className}`}
         {...props}
       >
         <span className="font-semibold text-left text-[#172033] dark:text-[#F4F1EA]">{children}</span>
@@ -37,7 +37,7 @@ export const LiquidGlassButton: React.FC<LiquidGlassButtonProps> = ({
       <button
         type={type}
         disabled={disabled || isSubmitting}
-        className={`group inline-flex items-center gap-2 h-[44px] px-4 rounded-xl font-hyperlegible text-sm font-semibold text-[#172033] dark:text-[#91A4D6] hover:bg-[#34456B]/08 dark:hover:bg-[#91A4D6]/10 transition-all duration-200 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34456B] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${className}`}
+        className={`group inline-flex items-center gap-2 min-h-[44px] h-auto px-4 py-2 rounded-xl font-hyperlegible text-sm font-semibold text-[#172033] dark:text-[#91A4D6] hover:bg-[#34456B]/08 dark:hover:bg-[#91A4D6]/10 transition-all duration-200 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34456B] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${className}`}
         {...props}
       >
         {icon && <span className="shrink-0 transition-transform duration-200 group-hover:-translate-x-0.5 text-[#172033] dark:text-[#91A4D6]">{icon}</span>}
@@ -50,7 +50,7 @@ export const LiquidGlassButton: React.FC<LiquidGlassButtonProps> = ({
     <button
       type={type}
       disabled={disabled || isSubmitting}
-      className={`liquid-glass-btn relative group inline-flex items-center justify-between gap-3 h-[52px] px-6 rounded-2xl font-hyperlegible text-sm font-bold text-white transition-all duration-200 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#34456B]/30 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${className}`}
+      className={`liquid-glass-btn relative group inline-flex items-center justify-between gap-3 min-h-[52px] h-auto px-6 py-3 rounded-2xl font-hyperlegible text-sm font-bold text-white transition-all duration-200 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#34456B]/30 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${className}`}
       {...props}
     >
       {/* Translucent Glass Surface & Rim Layers */}
