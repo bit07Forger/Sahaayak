@@ -1,4 +1,5 @@
 import { firestore } from './firebaseAdmin';
+import { WorkflowProgressDoc } from '../types/firestore';
 
 // Local templates for initialization & fallbacks
 export interface Question {
@@ -151,31 +152,13 @@ export interface FirestoreUser {
   id: string;
   email: string;
   createdAt: string;
+  updatedAt: string;
   preferences?: {
     textSize: string;
     contrast: string;
     voiceSpeed: string;
     voiceEnabled: boolean;
   };
-  progress?: {
-    currentStep: number;
-    status: string;
-    updatedAt: string;
-  };
-}
-
-export interface FirestoreAnswer {
-  questionKey: string;
-  rawValue: string;
-  interpretedValue: string;
-  isConfirmed: boolean;
-  updatedAt: string;
-}
-
-export interface FirestoreDocumentStatus {
-  documentKey: string;
-  status: string; // MISSING, COMPLETED
-  updatedAt: string;
 }
 
 export const db = {
@@ -188,8 +171,8 @@ export const db = {
       id: uid,
       email: data?.email || '',
       createdAt: data?.createdAt || '',
+      updatedAt: data?.updatedAt || '',
       preferences: data?.preferences,
-      progress: data?.progress,
     };
   },
 
@@ -198,16 +181,12 @@ export const db = {
       id: uid,
       email,
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       preferences: {
         textSize: 'normal',
         contrast: 'normal',
         voiceSpeed: 'normal',
         voiceEnabled: false,
-      },
-      progress: {
-        currentStep: 0,
-        status: 'NOT_STARTED',
-        updatedAt: new Date().toISOString(),
       },
     };
     await firestore.collection('users').doc(uid).set(user);
@@ -232,78 +211,116 @@ export const db = {
     if (data.contrast !== undefined) updateObj['preferences.contrast'] = data.contrast;
     if (data.voiceSpeed !== undefined) updateObj['preferences.voiceSpeed'] = data.voiceSpeed;
     if (data.voiceEnabled !== undefined) updateObj['preferences.voiceEnabled'] = data.voiceEnabled;
+    updateObj.updatedAt = new Date().toISOString();
 
     await userRef.update(updateObj);
     const updatedUser = await db.findUserById(uid);
     return updatedUser?.preferences;
   },
 
-  // 3. Progress
-  findProgressByUserId: async (uid: string) => {
-    const user = await db.findUserById(uid);
-    return user?.progress || {
+  // 3. Workflow Progress Operations (New Document scoped: users/{uid}/workflowProgress/{serviceId})
+  findProgressDoc: async (uid: string, serviceId: string): Promise<WorkflowProgressDoc | null> => {
+    const docRef = firestore.collection('users').doc(uid).collection('workflowProgress').doc(serviceId);
+    const snap = await docRef.get();
+    if (!snap.exists) return null;
+    return snap.data() as WorkflowProgressDoc;
+  },
+
+  getOrCreateProgressDoc: async (uid: string, serviceId: string): Promise<WorkflowProgressDoc> => {
+    const docRef = firestore.collection('users').doc(uid).collection('workflowProgress').doc(serviceId);
+    const snap = await docRef.get();
+    if (snap.exists) {
+      return snap.data() as WorkflowProgressDoc;
+    }
+
+    const initialProgress: WorkflowProgressDoc = {
+      serviceId,
       currentStep: 0,
       status: 'NOT_STARTED',
+      answers: {},
+      documentStatuses: {},
       updatedAt: new Date().toISOString(),
     };
+    await docRef.set(initialProgress);
+    return initialProgress;
   },
 
-  updateProgress: async (uid: string, currentStep: number, status: string) => {
-    const userRef = firestore.collection('users').doc(uid);
-    await userRef.update({
-      'progress.currentStep': currentStep,
-      'progress.status': status,
-      'progress.updatedAt': new Date().toISOString(),
+  upsertAnswer: async (uid: string, serviceId: string, questionKey: string, rawValue: string, interpretedValue: string, isConfirmed: boolean) => {
+    const docRef = firestore.collection('users').doc(uid).collection('workflowProgress').doc(serviceId);
+
+    await firestore.runTransaction(async (transaction) => {
+      const snap = await transaction.get(docRef);
+      let progress: WorkflowProgressDoc;
+
+      if (!snap.exists) {
+        progress = {
+          serviceId,
+          currentStep: 0,
+          status: 'IN_PROGRESS',
+          answers: {},
+          documentStatuses: {},
+          updatedAt: new Date().toISOString(),
+        };
+      } else {
+        progress = snap.data() as WorkflowProgressDoc;
+      }
+
+      if (!progress.answers) {
+        progress.answers = {};
+      }
+
+      progress.answers[questionKey] = {
+        rawValue,
+        interpretedValue,
+        isConfirmed,
+        updatedAt: new Date().toISOString(),
+      };
+      progress.updatedAt = new Date().toISOString();
+
+      transaction.set(docRef, progress, { merge: true });
     });
   },
 
-  // 4. Answers (Subcollection)
-  findAnswersByUserId: async (uid: string): Promise<FirestoreAnswer[]> => {
-    const snapshot = await firestore.collection('users').doc(uid).collection('answers').get();
-    const answers: FirestoreAnswer[] = [];
-    snapshot.forEach((doc) => {
-      const data = doc.data();
-      answers.push({
-        questionKey: doc.id,
-        rawValue: data.rawValue || '',
-        interpretedValue: data.interpretedValue || '',
-        isConfirmed: !!data.isConfirmed,
-        updatedAt: data.updatedAt || '',
-      });
+  upsertDocumentStatus: async (uid: string, serviceId: string, documentKey: string, status: 'MISSING' | 'COMPLETED') => {
+    const docRef = firestore.collection('users').doc(uid).collection('workflowProgress').doc(serviceId);
+
+    await firestore.runTransaction(async (transaction) => {
+      const snap = await transaction.get(docRef);
+      let progress: WorkflowProgressDoc;
+
+      if (!snap.exists) {
+        progress = {
+          serviceId,
+          currentStep: 0,
+          status: 'IN_PROGRESS',
+          answers: {},
+          documentStatuses: {},
+          updatedAt: new Date().toISOString(),
+        };
+      } else {
+        progress = snap.data() as WorkflowProgressDoc;
+      }
+
+      if (!progress.documentStatuses) {
+        progress.documentStatuses = {};
+      }
+
+      progress.documentStatuses[documentKey] = {
+        status,
+        updatedAt: new Date().toISOString(),
+      };
+      progress.updatedAt = new Date().toISOString();
+
+      transaction.set(docRef, progress, { merge: true });
     });
-    return answers;
   },
 
-  upsertAnswer: async (uid: string, questionKey: string, rawValue: string, interpretedValue: string, isConfirmed: boolean) => {
-    const answerRef = firestore.collection('users').doc(uid).collection('answers').doc(questionKey);
-    await answerRef.set({
-      rawValue,
-      interpretedValue,
-      isConfirmed,
-      updatedAt: new Date().toISOString(),
-    });
-  },
-
-  // 5. Document Statuses (Subcollection)
-  findDocumentStatusesByUserId: async (uid: string): Promise<FirestoreDocumentStatus[]> => {
-    const snapshot = await firestore.collection('users').doc(uid).collection('documents').get();
-    const docStatuses: FirestoreDocumentStatus[] = [];
-    snapshot.forEach((doc) => {
-      const data = doc.data();
-      docStatuses.push({
-        documentKey: doc.id,
-        status: data.status || 'MISSING',
-        updatedAt: data.updatedAt || '',
-      });
-    });
-    return docStatuses;
-  },
-
-  upsertDocumentStatus: async (uid: string, documentKey: string, status: string) => {
-    const docRef = firestore.collection('users').doc(uid).collection('documents').doc(documentKey);
+  updateProgressState: async (uid: string, serviceId: string, currentStep: number, status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED') => {
+    const docRef = firestore.collection('users').doc(uid).collection('workflowProgress').doc(serviceId);
     await docRef.set({
+      currentStep,
       status,
       updatedAt: new Date().toISOString(),
-    });
+    }, { merge: true });
   },
 };

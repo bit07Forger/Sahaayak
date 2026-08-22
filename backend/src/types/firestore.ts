@@ -91,3 +91,49 @@ export interface WorkflowProgressDoc {
   documentStatuses: Record<string, DocumentStatusItem>; // Keyed by documentId
   updatedAt: string;
 }
+
+/**
+ * services/{serviceId}/chatConfig/default
+ * Chatbot configuration rules and policy fallbacks.
+ */
+export interface ChatConfigDoc {
+  status: 'prepared' | 'enabled' | 'disabled';
+  policyVersion: string;
+  supportedLanguage: string;
+  allowedTopics: string[];
+  maxMessageChars: number;
+  maxConversationMessages: number;
+  rateLimit: {
+    windowSeconds: number;
+    maxRequests: number;
+  };
+  fallbackMessages: {
+    outOfScope: string;
+    unavailable: string;
+    unsafeRequest: string;
+    manualWorkflowRequired: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * services/{serviceId}/chatKnowledge/{articleId}
+ * Structured approved knowledge articles.
+ */
+export interface ChatKnowledgeDoc {
+  id: string;
+  topic: string;
+  title: string;
+  plainLanguageAnswer: string;
+  sourceTitle: string;
+  sourceUrl?: string;
+  sourceStatus: 'approved';
+  language: string;
+  priority: number;
+  active: boolean;
+  policyVersion: string;
+  lastReviewedAt: string;
+  createdAt: string;
+  updatedAt: string;
+}

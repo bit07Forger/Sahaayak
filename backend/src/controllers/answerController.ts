@@ -234,8 +234,8 @@ export async function confirmAnswer(req: AuthRequest, res: Response) {
       return res.status(400).json({ error: validationError });
     }
 
-    // Save Answer to Firestore subcollection
-    await db.upsertAnswer(userId, questionKey, rawValue, interpretedValue, true);
+    // Save Answer to Firestore workflowProgress document
+    await db.upsertAnswer(userId, ACTIVE_SERVICE.key, questionKey, rawValue, interpretedValue, true);
 
     // Determine current questions list to resolve next steps
     const dbQuestions = ACTIVE_SERVICE.questions;
@@ -249,8 +249,8 @@ export async function confirmAnswer(req: AuthRequest, res: Response) {
       progressStatus = 'COMPLETED';
     }
 
-    // Update User Progress in Firestore
-    await db.updateProgress(userId, nextStep, progressStatus);
+    // Update User Progress in Firestore workflowProgress document
+    await db.updateProgressState(userId, ACTIVE_SERVICE.key, nextStep, progressStatus as any);
 
     return res.status(200).json({
       success: true,
