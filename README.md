@@ -1,88 +1,89 @@
 # Sahaayak
 
-Sahaayak is an accessibility-first service navigator designed to help individuals with cognitive, visual, hearing, motor, language, or low digital-literacy barriers independently complete essential digital public services.
+An accessibility-first digital assistance platform. Describe any task in
+natural language — voice or text — and Sahaayak guides you through it one
+step at a time, with adjustable text size, high contrast, read-aloud, and
+speech input available on every screen.
 
-## Problem
-Many people struggle to navigate complex digital public platforms because layouts are cluttered, instructions use dense bureaucratic language, forms lack visible focus/keyboard accessibility, and there is little real-time support.
+## Getting started
 
-## Solution
-**Sahaayak** provides a simplified, guided, and highly accessible workspace to step through one service at a time (e.g., *Accessible Parking Permit*) using:
-- Simple, clear language step-by-step guidance.
-- Adaptive UI elements (Text Size scaling and High Contrast mode).
-- Voice support (browser-native Text-To-Speech read-aloud and Speech-To-Text voice answers).
-- AI natural language interpretation with user confirmation.
-- Deterministic data validation.
-- Missing documents checklist and readiness calculations.
-
----
-
-## Technical Stack
-
-- **Frontend**: React (Vite) + TypeScript + Tailwind CSS + Web Speech API
-- **Backend**: Node.js + Express + TypeScript + Firebase Admin SDK
-- **Database**: Firebase Cloud Firestore
-- **Authentication**: Firebase Authentication
-
----
-
-## Project Structure
-
-```text
-sahaayak/
-├── backend/             # Express.js server and data service
-├── frontend/            # React (Vite) client application
-├── docs/                # Comprehensive architecture & design docs
-├── AGENTS.md            # Firebase development standards and rules
-├── .env.example         # System configuration blueprint
-└── README.md            # Main entry point
+```bash
+npm install
+npm run dev
 ```
 
----
+Then open the printed local URL (usually `http://localhost:5173`).
 
-## Installation & Getting Started
+To build for production:
 
-### Prerequisites
-- Node.js (v18+)
-- A Firebase Project (with Firestore and Authentication enabled)
+```bash
+npm run build
+npm run preview
+```
 
-### Step 1: Configuration
-1. Obtain configuration credentials from your Firebase Console.
-2. Edit `.env` file in the root directory and update with the Firebase variables.
+## Important: this hasn't been run yet
 
-### Step 2: Backend Setup
-1. Navigate to the `backend/` folder.
-2. Install packages:
-   ```bash
-   npm install
-   ```
-3. Start the backend developer server:
-   ```bash
-   npm run dev
-   ```
+This project was generated without network access, so `npm install` was
+never run and the build was never verified end-to-end. Before relying on
+it:
 
-### Step 3: Frontend Setup
-1. Navigate to the `frontend/` folder.
-2. Install packages:
-   ```bash
-   npm install
-   ```
-3. Start the Vite dev server:
-   ```bash
-   npm run dev
-   ```
-4. Open [http://localhost:5173](http://localhost:5173) in your browser.
+1. Run `npm install` and fix any dependency resolution issues.
+2. Run `npm run dev` and click through the three demo flows (scholarship,
+   form help, train booking) from the homepage.
+3. Run `npm run build` (runs `tsc -b`) to catch any TypeScript errors —
+   there's a reasonable chance of small type mismatches given the file
+   count, since none of this was type-checked by a real compiler.
 
----
+## What's implemented
 
-## Core Features
-1. **Adaptive Display**: Sizing options (Normal, Large, Extra Large) and High Contrast theme toggling.
-2. **Text-To-Speech (Read Aloud)**: Reads page headers, questions, and descriptions out loud.
-3. **Speech-To-Text**: Allows dictating answers.
-4. **AI Confirmation Flow**: Raw user inputs (written or typed) are parsed backend-side to extract clean variables. The user explicitly reviews, edits, or retries the parsed value before it's saved.
-5. **Deterministic Checklists**: The document checklist clearly tracks missing vs optional entries to declare whether a user is "Ready to submit" or needs "More information".
+- Homepage with voice + text problem input, no forced category picker
+- Text size (Normal / Large / Extra Large), high contrast, read-aloud,
+  and a language selector (English / Hindi / Kannada) — all visible in
+  the nav bar on every page, all persisted to localStorage
+- Understanding screen that requires explicit user confirmation before
+  proceeding (never assumes the AI got it right)
+- Guided one-question-at-a-time flow with Back/Continue, a "Need help?"
+  plain-language explainer, and Step X of Y progress
+- AI answer-interpretation confirmation flow (e.g. "two lakh rupees" →
+  ₹2,00,000), never auto-saved without explicit confirmation
+- Deterministic document checklist and readiness calculation — computed
+  from plain booleans, never decided by an AI call
+- Editable review screen before completion
+- Three demo scenarios: scholarship application, understanding a
+  confusing form, and booking a train ticket
+- Save/resume via localStorage ("Continue where you left off?")
+- Keyboard accessible throughout: semantic buttons/inputs, visible focus
+  rings (including a high-contrast-mode variant), no clickable `<div>`s
 
----
+## What's stubbed or simplified
 
-## Development Guidelines
+- **Backend**: `src/services/api.ts` is written against a real REST
+  shape (`POST /api/interpret-request`, `POST /api/interpret-answer`)
+  but falls back to an offline demo interpreter when no
+  `VITE_API_BASE_URL` is set. Point that env var at a real backend to
+  switch over — no component code needs to change.
+- **Translations**: the EN/HI/KN dictionary in `src/i18n/translations.ts`
+  covers the core UI strings (nav, buttons, hero). Question text, help
+  text, and document labels in `src/data/demoTasks.ts` are English-only
+  in this pass — extending them to all three languages is the next step
+  for full multilingual coverage.
+- **Speech recognition/synthesis** depend on browser support (Chrome
+  has the best Web Speech API coverage). The app degrades gracefully —
+  voice controls simply don't render, and the text input still works —
+  but this hasn't been tested against a real microphone in this
+  environment.
 
-All future development, collection updates, and authentication features must adhere to the standards outlined in [`AGENTS.md`](file:///c:/Users/ayush/Desktop/COLLEGE%20FOLDER/Hackathon/AGENTS.md). Refer to this file for architecture constraints, Firestore access rules, client/server boundaries, and environment specifications.
+## Project structure
+
+```
+src/
+├── components/     # Reusable, accessibility-first UI pieces
+├── pages/          # Home, Understand, Guide, Review, Complete
+├── hooks/          # useSpeech, useAccessibility, useLocalStorage
+├── context/         # AppContext ties the above together for every page
+├── services/        # api.ts — the only place that calls fetch()
+├── data/            # demoTasks.ts — the 3 demo scenarios
+├── i18n/             # translations.ts
+├── types/            # shared TypeScript types
+├── App.tsx, main.tsx, index.css
+```
