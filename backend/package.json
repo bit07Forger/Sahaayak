@@ -4,12 +4,15 @@
   "description": "Backend API for Sahaayak MVP",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -p tsconfig.build.json",
     "start": "node dist/index.js",
     "dev": "nodemon --watch src -e ts --exec ts-node src/index.ts",
     "seed:services:dry-run": "node scripts/seed.mjs --dry-run",
     "seed:services:apply": "node scripts/seed.mjs --apply",
-    "seed:services:check": "node scripts/seed.mjs --check"
+    "seed:services:check": "node scripts/seed.mjs --check",
+    "test": "vitest run --exclude tests/firestoreRules.test.ts",
+    "test:backend": "vitest run --exclude tests/firestoreRules.test.ts",
+    "test:rules": "npx -y firebase-tools@latest emulators:exec --only firestore --project sahaayak-rules-test \"vitest run tests/firestoreRules.test.ts\""
   },
   "dependencies": {
     "@google/genai": "^2.3.0",
@@ -19,11 +22,16 @@
     "firebase-admin": "^12.0.0"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/node": "^20.11.24",
+    "@types/supertest": "^7.2.1",
+    "firebase": "^12.18.0",
     "nodemon": "^3.1.0",
+    "supertest": "^7.2.2",
     "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^4.1.11"
   }
 }

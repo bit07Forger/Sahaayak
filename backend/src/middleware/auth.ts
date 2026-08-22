@@ -16,14 +16,28 @@ export interface AuthRequest extends Request {
  */
 export async function requireFirebaseAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
+  const requestId = (req as any).requestId || 'unknown';
+
   if (!authHeader) {
-    return res.status(401).json({ error: 'Unauthorized', message: 'Missing or invalid token.' });
+    return res.status(401).json({
+      error: {
+        code: 'AUTH_MISSING',
+        message: 'Sign in to continue.',
+        requestId,
+      },
+    });
   }
 
   const parts = authHeader.split(' ');
   // Accept the Bearer scheme case-insensitively
   if (parts.length !== 2 || parts[0].toLowerCase() !== 'bearer' || !parts[1]) {
-    return res.status(401).json({ error: 'Unauthorized', message: 'Missing or invalid token.' });
+    return res.status(401).json({
+      error: {
+        code: 'AUTH_MISSING',
+        message: 'Sign in to continue.',
+        requestId,
+      },
+    });
   }
 
   const token = parts[1];
@@ -43,11 +57,23 @@ export async function requireFirebaseAuth(req: AuthenticatedRequest, res: Respon
   } catch (err: any) {
     // Map expected verification failures (expired, invalid signature, etc.) to 401
     if (err.code && err.code.startsWith('auth/')) {
-      return res.status(401).json({ error: 'Unauthorized', message: 'Missing or invalid token.' });
+      return res.status(401).json({
+        error: {
+          code: 'AUTH_INVALID',
+          message: 'Your session could not be verified. Please sign in again.',
+          requestId,
+        },
+      });
     }
 
     // Map unexpected credential, network, or server failures to 500
-    return res.status(500).json({ error: 'Internal Server Error', message: 'Authentication check failed.' });
+    return res.status(500).json({
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'Something went wrong. Please try again.',
+        requestId,
+      },
+    });
   }
 }
 
